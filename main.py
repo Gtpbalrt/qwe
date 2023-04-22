@@ -1,147 +1,74 @@
-import requests,time,argparse,sys
+import os
+import requests
+import chardet
 
-from bs4 import BeautifulSoup
+# 参数设定
+username = os.environ['USERNAME']    # 获取用户名
+password = os.environ['PASSWORD']    # 获取密码
+web_url = os.environ['WEB_URL']      # 获取目标网站地址
 
-from selenium import webdriver
+login_url = web_url + '/php_mysql/login.php'   # 登录页面链接
+test_url = web_url + '/php-editor/test_load_ojtimu1.php'  # 测试页面链接
+chat_url = web_url + '/php_hudong/chat/index.php'         # 聊天室页面链接
+explorer_url = web_url + '/explorer.php'                 # 资源管理器页面链接
+logout_url = web_url + '/php_mysql/loginOut.php'         # 登出页面链接
 
-from selenium.webdriver.chrome.service import Service
-
-from selenium.webdriver.common.by import By
-
-from selenium.webdriver.chrome.options import Options
-
-from apscheduler.schedulers.blocking import BlockingScheduler
-
-headers = {
-
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/111.0",
-
-    "Referer": "http://113.106.4.60:8901/course_web/",
-
-    "Origin": "http://113.106.4.60:8901",
-
+# 登录数据
+data = {
+    'name': username,
+    'passwd': password,
+    'type': '1',
+    'sub': '登陆'
 }
 
-phpsession = "0ebpsshjbrsd75glgpt6eognf2"
+# 发送登录请求
+session = requests.Session()                                 # 创建会话对象
+session.headers = {'User-Agent': 'Windows NT 10.0; Win64; x64; rv:112.0) Gecko/20100101 Firefox/112.0'}     # 设置会话 User-Agent
+response = session.post(login_url, data=data)                # 发送 POST 请求并保持会话状态
 
-url = "http://113.106.4.60:8901/php_mysql/login.php"
+# 获取响应内容并进行编码自动检测
+content = response.content                                   # 获取响应内容
+encoding = chardet.detect(content)['encoding']               # 自动检测响应内容编码方式
+text = content.decode(encoding)                              # 解码响应内容
 
-xin_url = "http://113.106.4.60:8901/php_hudong/chat/index.php"
+# 检查登录是否成功并获取 cookie
+cookies = None                                                # 初始化 cookie
+if '_登录成功！' in text:                                    # 判断是否登录成功
+    print('登录成功')
+    cookies = response.cookies                               # 获取 cookie
+else:
+    print('登录失败')
+    # 结束进程或执行其他操作
+    os._exit(0)
 
-oj_url = "http://113.106.4.60:8901/php_run/index.php"
+# 访问其他页面
+response1 = session.get(test_url, cookies=cookies)            # 发送 GET 请求并设置 cookie
+if 'action="login.php"' in response1.text:                    # 判断页面是否访问成功
+    print('访问 test_url 失败，登录状态丢失')
+else:
+    print('访问 test_url 成功')
 
-jifen_url = "http://113.106.4.60:8901/php_mysql/jf_show1.php?xh="
+response2 = session.get(chat_url, cookies=cookies)            # 发送 GET 请求并设置 cookie
+if 'action="login.php"' in response2.text:                    # 判断页面是否访问成功
+    print('访问 chat_url 失败，登录状态丢失')
+else:
+    print('访问 chat_url 成功')
 
-# par = argparse.ArgumentParser()
+response3 = session.get(explorer_url, cookies=cookies)        # 发送 GET 请求并设置 cookie
+if 'action="login.php"' in response3.text:                    # 判断页面是否访问成功
+    print('访问 explorer_url 失败，登录状态丢失')
+else:
+    print('访问 explorer_url 成功')
 
-# par.add_argument('-u',type=str,default=None)
+# 发送登出请求并清除 cookie
+response4 = session.get(logout_url, cookies=cookies)           # 发送 GET 请求并设置 cookie
+content4 = response4.content                                  # 获取响应内容
+encoding4 = chardet.detect(content4)['encoding']              # 自动检测响应内容编码方式
+text4 = content4.decode(encoding4)                             # 解码响应内容
 
-# par.add_argument('-p',type=str,default=None)
-
-# par.add_argument('-jf',type=int,default=None)
-
-# args = par.parse_args()
-
-# if args.u == None:
-
-#     print("请输入账号")
-
-#     sys.exit(0)
-
-# if args.p == None:
-
-#     print("请输入密码")
-
-#     sys.exit(0)
-
-# if args.jf == None:
-
-#     print("请输入学号")
-
-#     sys.exit(0)
-
-username = "吴开淦"
-
-password = "1433223"
-
-student_num = "1433223"
-
-def read_ji():
-
-    ji_response = requests.get(jifen_url + student_num,headers=headers)
-
-    with open("inte.html",mode="wb") as f:
-
-        jf_lxml = BeautifulSoup(ji_response.content,"lxml")
-
-        rem = jf_lxml.find_all("h2",class_="text-danger")[0].contents[0].strip() #string text
-
-        print("当前积分共"+rem+"分")
-
-def sign():
-
-    # path = Service('chromedriver.exe')
-
-    op = Options()
-
-    op.headless = False
-
-    # 创建浏览器
-
-    browser = webdriver.Chrome(options=op)
-
-    browser.get(url)
-
-    browser.maximize_window()
-
-    # print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
-
-    print("当前操作网页\t"+browser.title)
-
-    # time.sleep(1)
-
-    name = browser.find_element(By.ID,"name")
-
-    name.send_keys(username)
-
-    paw = browser.find_element(By.ID,"passwd")
-
-    paw.send_keys(password)
-
-    sub = browser.find_element(By.XPATH,"/html/body/div[1]/div/div/div[2]/div/form/input[1]")
-
-    sub.click()
-
-    browser.execute_script("window.open('http://113.106.4.60:8901/php_hudong/chat/index.php','_blank')")
-
-    print("当前操作网页\t"+"讨论交流签到成功")
-
-    browser.execute_script("window.open('http://113.106.4.60:8901/php-editor/test_index.php','_blank')")
-
-    print("当前操作网页\t"+"oj练习签到成功",end='\n')
-
-    time.sleep(2)
-
-    read_ji()
-
-    browser.close()
-
-    browser.quit()
-
-def func():
-
-    # 创建调度器BlockingScheduler()
-
-    scheduler = BlockingScheduler()
-
-    scheduler.add_job(sign, 'interval', minutes=15, id='test_job1')
-
-    scheduler.add_job(read_ji, 'interval', minutes=15, id='test_job2')
-
-    scheduler.start()
-
-if __name__ == "__main__":
-
-    sign()
-
-    func()
+if '你已经退出系统！' in text4:                               # 判断是否登出成功
+    print('登出成功')
+    session.cookies.clear()                                   # 清除 cookie
+else:
+    print('登出失败')
+    session.cookies.clear()                                   # 清除 cookie
