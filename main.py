@@ -23,7 +23,7 @@ data = {
 
 # 发送登录请求
 session = requests.Session()                                 # 创建会话对象
-session.headers = {'User-Agent': 'Windows NT 10.0; Win64; x64; rv:112.0) Gecko/20100101 Firefox/112.0'}     # 设置会话 User-Agent
+session.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/112.0'}     # 设置会话 User-Agent
 response = session.post(login_url, data=data)                # 发送 POST 请求并保持会话状态
 
 # 获取响应内容并进行编码自动检测
